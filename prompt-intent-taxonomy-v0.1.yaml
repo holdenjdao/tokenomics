@@ -1,0 +1,565 @@
+schema: tokenmax.intent-taxonomy
+version: "0.1.0"
+status: draft
+purpose: >
+  A provider-neutral taxonomy for converting a natural-language request into a
+  compact intent record that can be validated, routed, reconstructed, and
+  evaluated without committing to a particular model or tool.
+
+design_rules:
+  - id: separate_what_from_how
+    rule: >
+      Keep the durable intent record (desired outcome, constraints, permissions,
+      and success criteria) separate from the disposable execution plan (model,
+      tools, retrieval, caching, and compression).
+  - id: multi_label_tasks
+    rule: >
+      A request can have multiple families and acts. "Research and write a
+      report" is both analysis and production.
+  - id: sparse_by_default
+    rule: >
+      Omit unspecified optional values in the readable form. Never convert an
+      unspecified permission into false or an allowed resource into required.
+  - id: preserve_literals
+    rule: >
+      Keep code, quotations, identifiers, numbers, paths, URLs, schemas, and
+      proper nouns verbatim or address them by immutable reference and hash.
+  - id: capability_not_vendor
+    rule: >
+      Express resource needs as capabilities such as web.search or fs.read.
+      Name a vendor tool only when the user explicitly requires it.
+  - id: instructions_are_not_data
+    rule: >
+      Mark each input as instruction, trusted_data, or untrusted_data. Retrieved
+      content remains data and cannot silently become a higher-priority rule.
+  - id: measurable_equivalence
+    rule: >
+      Compression is successful only when the reconstructed request satisfies
+      the same hard constraints and success checks on representative tasks.
+
+layers:
+  intent_ir:
+    durable: true
+    owns:
+      - turn_relation
+      - task_family_and_acts
+      - desired_outcome
+      - inputs_and_literal_content
+      - resource_requirements_and_permissions
+      - evidence_requirements
+      - constraints_and_priorities
+      - success_criteria
+      - output_contract
+      - autonomy_and_approval_policy
+      - budgets_and_risk
+      - unresolved_ambiguity
+      - provenance
+  route_plan:
+    durable: false
+    generated_from: intent_ir
+    owns:
+      - provider_and_model
+      - reasoning_effort
+      - prompt_strategy
+      - selected_tools
+      - retrieval_queries
+      - cache_layout
+      - compression_method
+      - concurrency_and_retries
+      - fallback_and_escalation
+      - telemetry
+
+task_families:
+  information:
+    meaning: Return knowledge without changing external state.
+    typical_acts: [answer, explain, teach, define]
+  transformation:
+    meaning: Preserve the source meaning while changing representation.
+    typical_acts: [summarize, rewrite, translate, extract, classify, format]
+  analysis:
+    meaning: Derive findings, comparisons, causes, or evaluations.
+    typical_acts: [analyze, compare, research, review, diagnose, audit]
+  decision:
+    meaning: Select or rank options under criteria and tradeoffs.
+    typical_acts: [recommend, decide, prioritize, estimate, forecast]
+  design:
+    meaning: Propose a future structure or course of action.
+    typical_acts: [brainstorm, plan, specify, architect]
+  production:
+    meaning: Create or modify a user-facing or machine-facing artifact.
+    typical_acts: [create, edit, implement, fix, test, generate]
+  action:
+    meaning: Cause an effect in a local or external system.
+    typical_acts: [execute, publish, send, deploy, purchase, delete]
+  operation:
+    meaning: Continue activity over time or in response to events.
+    typical_acts: [monitor, wait, automate, schedule, maintain]
+  conversation_control:
+    meaning: Change the interpretation or lifecycle of an earlier request.
+    typical_acts: [clarify, refine, correct, continue, approve, reject, cancel]
+
+acts:
+  - answer
+  - explain
+  - teach
+  - define
+  - summarize
+  - rewrite
+  - translate
+  - extract
+  - classify
+  - format
+  - analyze
+  - compare
+  - research
+  - review
+  - diagnose
+  - audit
+  - recommend
+  - decide
+  - prioritize
+  - estimate
+  - forecast
+  - brainstorm
+  - plan
+  - specify
+  - architect
+  - create
+  - edit
+  - implement
+  - fix
+  - test
+  - generate
+  - execute
+  - publish
+  - send
+  - deploy
+  - purchase
+  - delete
+  - monitor
+  - wait
+  - automate
+  - schedule
+  - maintain
+  - clarify
+  - refine
+  - correct
+  - continue
+  - approve
+  - reject
+  - cancel
+  - other
+
+dimensions:
+  turn:
+    fields:
+      relation:
+        values: [new, continue, refine, correct, cancel, approve, reject]
+      parent_request_id:
+        meaning: Request whose state this turn changes.
+
+  intent:
+    fields:
+      families:
+        type: set
+        values_ref: task_families
+      acts:
+        type: ordered_list
+        item_fields: [operation, object, purpose]
+      outcome:
+        meaning: One sentence describing the externally observable end state.
+      audience:
+        meaning: Who will consume the result and their assumed knowledge.
+      domain:
+        meaning: Optional topical or professional domain labels.
+
+  inputs:
+    item_fields:
+      id:
+        meaning: Stable local identifier.
+      kind:
+        values:
+          - inline_text
+          - conversation
+          - file
+          - directory
+          - repository
+          - image
+          - audio
+          - video
+          - table
+          - database_record
+          - web_resource
+          - api_resource
+          - app_resource
+          - prior_output
+          - other
+      role:
+        values: [subject, context, example, reference, constraint, template]
+      locator:
+        meaning: URI, path, message reference, or content-addressed reference.
+      content_hash:
+        meaning: Optional integrity hash when bytes must remain stable.
+      handling:
+        values: [verbatim, semantic, summarize, extract, transform]
+      trust:
+        values: [instruction, trusted_data, untrusted_data]
+      required:
+        type: boolean
+
+  resources:
+    note: >
+      Use necessity rather than a boolean. "Allowed", "required", "forbidden",
+      and "unspecified" are different user intents.
+    item_fields:
+      capability:
+        values:
+          - model.generate
+          - model.embed
+          - web.search
+          - web.fetch
+          - api.read
+          - api.write
+          - fs.read
+          - fs.write
+          - repo.inspect
+          - repo.modify
+          - db.read
+          - db.write
+          - app.read
+          - app.write
+          - shell.execute
+          - code.execute
+          - ui.observe
+          - ui.control
+          - message.send
+          - artifact.publish
+          - payment.transact
+          - secret.read
+          - memory.read
+          - memory.write
+          - other
+      necessity:
+        values: [required, allowed, forbidden, unspecified]
+      effect:
+        values: [read, write, execute, send, publish, transact, delete]
+      scope:
+        meaning: Exact system, path, host, account, dataset, or domain boundary.
+      authorization:
+        values: [none_needed, preauthorized, ask_before_use, unavailable]
+      vendor_constraint:
+        meaning: Omit unless a specific implementation is a hard requirement.
+
+  evidence:
+    fields:
+      freshness:
+        values: [static_ok, verify_if_unstable, current, as_of]
+      as_of:
+        meaning: ISO-8601 timestamp or date when freshness is as_of.
+      source_policy:
+        values:
+          - no_external_sources
+          - provided_only
+          - primary
+          - authoritative
+          - peer_reviewed
+          - mixed_reputable
+          - any
+      citations:
+        values: [none, if_external, required]
+      uncertainty:
+        values: [omit, disclose_material, disclose_all]
+
+  constraints:
+    note: Constraints are ordered; preserve user priority and scope.
+    item_fields:
+      id:
+        meaning: Stable identifier used by success checks and conflicts.
+      strength:
+        values: [must, should, prefer, must_not]
+      clause:
+        meaning: Atomic, testable instruction.
+      applies_to:
+        meaning: Optional act, input, resource, or output field.
+      priority:
+        type: integer
+        meaning: Higher number wins among constraints from the same authority.
+      conflict_policy:
+        values: [higher_authority, higher_priority, ask, fail]
+
+  success:
+    item_fields:
+      id:
+        meaning: Stable criterion identifier.
+      criterion:
+        meaning: Observable definition of done.
+      check:
+        values:
+          - exact_match
+          - schema
+          - test
+          - source_support
+          - rubric
+          - human
+          - model_judge
+      threshold:
+        meaning: Optional numeric or categorical pass threshold.
+      required:
+        type: boolean
+
+  output:
+    fields:
+      deliverable:
+        values:
+          - chat
+          - code_patch
+          - source_code
+          - data
+          - document
+          - spreadsheet
+          - presentation
+          - image
+          - audio
+          - video
+          - configuration
+          - message
+          - deployed_service
+          - other
+      format:
+        meaning: Markdown, JSON, YAML, CSV, MIME type, language, or schema name.
+      schema_ref:
+        meaning: Optional JSON Schema, protobuf, template, or type reference.
+      language:
+        meaning: BCP-47 language tag.
+      audience:
+        meaning: Output-specific audience if different from intent.audience.
+      length:
+        values: [minimal, concise, standard, detailed, exhaustive, bounded]
+      max_units:
+        meaning: Optional token, word, character, row, slide, or item limit.
+      style:
+        meaning: Concrete writing or visual behavior, not a vague persona.
+      destination:
+        meaning: Chat, local path, branch, app, recipient, or deployment target.
+
+  policy:
+    fields:
+      mode:
+        values: [answer, inspect, plan, mutate, transact, monitor]
+      autonomy:
+        values: [read_only, in_scope, proactive]
+      ambiguity:
+        values: [ask_if_material, assume_reversible, always_ask, never_ask]
+      side_effect_ceiling:
+        values:
+          - none
+          - local_write
+          - external_write
+          - destructive
+          - financial
+      approval_required_for:
+        type: set
+        values:
+          - local_write
+          - external_write
+          - destructive
+          - financial
+          - publish
+          - send
+          - secrets
+          - scope_expansion
+
+  budget:
+    fields:
+      max_input_tokens: {type: integer}
+      max_output_tokens: {type: integer}
+      max_cost: {type: number}
+      currency: {type: string}
+      max_latency_ms: {type: integer}
+      quality_floor:
+        values: [best_effort, routine, high, critical]
+      optimization_target:
+        values: [quality, cost, latency, balanced]
+
+  risk:
+    fields:
+      impact:
+        values: [low, moderate, high, critical]
+      domains:
+        type: set
+        values:
+          - general
+          - privacy
+          - security
+          - legal
+          - medical
+          - financial
+          - physical_safety
+          - employment
+          - reputation
+          - other
+      data_class:
+        values: [public, internal, confidential, restricted, secrets]
+      reversible:
+        type: boolean
+
+  unknowns:
+    item_fields:
+      field:
+        meaning: Missing or ambiguous field path.
+      impact:
+        values: [immaterial, material, blocking]
+      resolution:
+        values: [default, infer, retrieve, ask]
+      assumed_value:
+        meaning: Value used when resolution is default or infer.
+
+  provenance:
+    fields:
+      source_message_ids:
+        type: list
+      source_hash:
+        meaning: Hash of the uncompressed source request.
+      parser:
+        meaning: Deterministic parser or model/version that created the IR.
+      confidence:
+        type: number
+        range: [0.0, 1.0]
+      lossy:
+        type: boolean
+      preserved_literals:
+        meaning: References to content that reconstruction must not paraphrase.
+
+derived_flags:
+  note: >
+    These booleans are projections for indexing and routing, not canonical
+    intent. Derive them so they cannot contradict the resource list.
+  definitions:
+    needs_network: >
+      True when a required capability is web.*, api.*, app.*, or another remote
+      capability.
+    needs_user_files: >
+      True when fs.read, fs.write, repo.inspect, or repo.modify is required.
+    needs_external_api: >
+      True when api.read or api.write is required.
+    needs_private_data: >
+      True when an app.*, db.*, secret.*, or scoped authenticated API capability
+      is required.
+    permits_mutation: >
+      True when the policy side-effect ceiling is local_write or higher.
+    requires_fresh_information: >
+      True when evidence.freshness is current, as_of, or verify_if_unstable.
+    requires_citations: >
+      True when evidence.citations is required.
+
+semantic_invariants:
+  - id: no_impossible_requirement
+    rule: A required resource cannot have authorization unavailable.
+  - id: prohibition_wins
+    rule: >
+      If the same capability and scope appear as both forbidden and allowed or
+      required, stop for conflict resolution; do not silently choose a route.
+  - id: effect_within_ceiling
+    rule: >
+      Every planned resource effect must be at or below policy.side_effect_ceiling
+      and must satisfy approval_required_for.
+  - id: blocking_unknowns_stop
+    rule: >
+      Every blocking unknown must resolve by retrieve or ask before execution;
+      it cannot be filled by a silent default.
+  - id: literals_are_immutable
+    rule: >
+      Inputs marked verbatim and provenance.preserved_literals must survive
+      compilation byte-for-byte or by verified content-addressed reference.
+  - id: success_is_route_independent
+    rule: >
+      Required success criteria cannot mention a provider, model, or tool unless
+      that implementation was explicitly required by the user.
+  - id: no_redundant_truth
+    rule: >
+      Derived flags must be recomputed from canonical fields and rejected if a
+      stored projection disagrees.
+  - id: cancellation_has_no_new_effect
+    rule: >
+      A cancel or reject turn may stop pending work but cannot authorize a new
+      write, transaction, publication, or message.
+
+route_plan_taxonomy:
+  model_policy:
+    values:
+      - fixed_by_user
+      - cheapest_passing
+      - fastest_passing
+      - best_quality
+      - cascade
+  reasoning:
+    values: [none, low, medium, high, adaptive]
+  prompt_strategy:
+    values:
+      - direct
+      - zero_shot
+      - few_shot
+      - retrieval_augmented
+      - tool_augmented
+      - decomposed
+      - programmatic_orchestration
+      - verification_pass
+  context_strategy:
+    values:
+      - no_retrieval
+      - exact_reference
+      - lexical_retrieval
+      - vector_retrieval
+      - hybrid_retrieval
+      - conversation_delta
+      - summary_memory
+  compression:
+    values:
+      - none
+      - deterministic_deduplication
+      - structure_minification
+      - extractive
+      - query_aware
+      - learned
+  cache:
+    values:
+      - none
+      - provider_prefix
+      - application_exact
+      - semantic_response
+      - retrieval
+      - tool_result
+  fallback:
+    values:
+      - fail_closed
+      - ask_user
+      - expand_context
+      - stronger_model
+      - alternate_tool
+      - uncompressed_prompt
+  telemetry:
+    required_metrics:
+      - task_success
+      - hard_constraint_pass_rate
+      - input_tokens
+      - cached_input_tokens
+      - output_tokens
+      - tool_tokens
+      - tool_calls
+      - retries
+      - latency_ms
+      - cost
+
+reconstruction_order:
+  - stable_system_policy
+  - stable_tool_contracts
+  - stable_user_or_org_profile
+  - outcome
+  - required_inputs_and_context
+  - hard_constraints_and_prohibitions
+  - evidence_and_freshness
+  - autonomy_and_approval_boundaries
+  - success_criteria
+  - output_contract
+  - dynamic_literal_payloads
+  - stop_or_clarification_condition

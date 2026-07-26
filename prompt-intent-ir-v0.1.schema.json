@@ -1,0 +1,609 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tokenmax.example/schemas/prompt-intent-ir-v0.1.schema.json",
+  "title": "TokenMax Prompt Intent IR",
+  "description": "Provider-neutral semantic request record. Execution routing belongs in a separate route plan.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "request_id", "turn", "intent", "output", "policy"],
+  "properties": {
+    "version": {
+      "const": "0.1.0"
+    },
+    "request_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "turn": {
+      "$ref": "#/$defs/turn"
+    },
+    "intent": {
+      "$ref": "#/$defs/intent"
+    },
+    "inputs": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/input"
+      },
+      "default": []
+    },
+    "resources": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/resource"
+      },
+      "default": []
+    },
+    "evidence": {
+      "$ref": "#/$defs/evidence"
+    },
+    "constraints": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/constraint"
+      },
+      "default": []
+    },
+    "success": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/success"
+      },
+      "default": []
+    },
+    "output": {
+      "$ref": "#/$defs/output"
+    },
+    "policy": {
+      "$ref": "#/$defs/policy"
+    },
+    "budget": {
+      "$ref": "#/$defs/budget"
+    },
+    "risk": {
+      "$ref": "#/$defs/risk"
+    },
+    "unknowns": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/unknown"
+      },
+      "default": []
+    },
+    "provenance": {
+      "$ref": "#/$defs/provenance"
+    }
+  },
+  "$defs": {
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "turn": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["relation"],
+      "properties": {
+        "relation": {
+          "enum": ["new", "continue", "refine", "correct", "cancel", "approve", "reject"]
+        },
+        "parent_request_id": {
+          "type": "string"
+        }
+      }
+    },
+    "intent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["families", "acts", "outcome"],
+      "properties": {
+        "families": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "information",
+              "transformation",
+              "analysis",
+              "decision",
+              "design",
+              "production",
+              "action",
+              "operation",
+              "conversation_control"
+            ]
+          }
+        },
+        "acts": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/act"
+          }
+        },
+        "outcome": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "audience": {
+          "type": "string"
+        },
+        "domain": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "act": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["operation", "object"],
+      "properties": {
+        "operation": {
+          "enum": [
+            "answer",
+            "explain",
+            "teach",
+            "define",
+            "summarize",
+            "rewrite",
+            "translate",
+            "extract",
+            "classify",
+            "format",
+            "analyze",
+            "compare",
+            "research",
+            "review",
+            "diagnose",
+            "audit",
+            "recommend",
+            "decide",
+            "prioritize",
+            "estimate",
+            "forecast",
+            "brainstorm",
+            "plan",
+            "specify",
+            "architect",
+            "create",
+            "edit",
+            "implement",
+            "fix",
+            "test",
+            "generate",
+            "execute",
+            "publish",
+            "send",
+            "deploy",
+            "purchase",
+            "delete",
+            "monitor",
+            "wait",
+            "automate",
+            "schedule",
+            "maintain",
+            "clarify",
+            "refine",
+            "correct",
+            "continue",
+            "approve",
+            "reject",
+            "cancel",
+            "other"
+          ]
+        },
+        "object": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "purpose": {
+          "type": "string"
+        }
+      }
+    },
+    "input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "role", "locator", "handling", "trust", "required"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "kind": {
+          "enum": [
+            "inline_text",
+            "conversation",
+            "file",
+            "directory",
+            "repository",
+            "image",
+            "audio",
+            "video",
+            "table",
+            "database_record",
+            "web_resource",
+            "api_resource",
+            "app_resource",
+            "prior_output",
+            "other"
+          ]
+        },
+        "role": {
+          "enum": ["subject", "context", "example", "reference", "constraint", "template"]
+        },
+        "locator": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "content_hash": {
+          "type": "string"
+        },
+        "handling": {
+          "enum": ["verbatim", "semantic", "summarize", "extract", "transform"]
+        },
+        "trust": {
+          "enum": ["instruction", "trusted_data", "untrusted_data"]
+        },
+        "required": {
+          "type": "boolean"
+        }
+      }
+    },
+    "resource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["capability", "necessity", "effect", "scope", "authorization"],
+      "properties": {
+        "capability": {
+          "enum": [
+            "model.generate",
+            "model.embed",
+            "web.search",
+            "web.fetch",
+            "api.read",
+            "api.write",
+            "fs.read",
+            "fs.write",
+            "repo.inspect",
+            "repo.modify",
+            "db.read",
+            "db.write",
+            "app.read",
+            "app.write",
+            "shell.execute",
+            "code.execute",
+            "ui.observe",
+            "ui.control",
+            "message.send",
+            "artifact.publish",
+            "payment.transact",
+            "secret.read",
+            "memory.read",
+            "memory.write",
+            "other"
+          ]
+        },
+        "necessity": {
+          "enum": ["required", "allowed", "forbidden", "unspecified"]
+        },
+        "effect": {
+          "enum": ["read", "write", "execute", "send", "publish", "transact", "delete"]
+        },
+        "scope": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "authorization": {
+          "enum": ["none_needed", "preauthorized", "ask_before_use", "unavailable"]
+        },
+        "vendor_constraint": {
+          "type": "string"
+        }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["freshness", "source_policy", "citations", "uncertainty"],
+      "properties": {
+        "freshness": {
+          "enum": ["static_ok", "verify_if_unstable", "current", "as_of"]
+        },
+        "as_of": {
+          "type": "string"
+        },
+        "source_policy": {
+          "enum": [
+            "no_external_sources",
+            "provided_only",
+            "primary",
+            "authoritative",
+            "peer_reviewed",
+            "mixed_reputable",
+            "any"
+          ]
+        },
+        "citations": {
+          "enum": ["none", "if_external", "required"]
+        },
+        "uncertainty": {
+          "enum": ["omit", "disclose_material", "disclose_all"]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "freshness": {
+                "const": "as_of"
+              }
+            }
+          },
+          "then": {
+            "required": ["as_of"]
+          }
+        }
+      ]
+    },
+    "constraint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "strength", "clause", "priority", "conflict_policy"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "strength": {
+          "enum": ["must", "should", "prefer", "must_not"]
+        },
+        "clause": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "applies_to": {
+          "type": "string"
+        },
+        "priority": {
+          "type": "integer"
+        },
+        "conflict_policy": {
+          "enum": ["higher_authority", "higher_priority", "ask", "fail"]
+        }
+      }
+    },
+    "success": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "criterion", "check", "required"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "criterion": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "check": {
+          "enum": ["exact_match", "schema", "test", "source_support", "rubric", "human", "model_judge"]
+        },
+        "threshold": {},
+        "required": {
+          "type": "boolean"
+        }
+      }
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["deliverable", "format", "language", "length", "destination"],
+      "properties": {
+        "deliverable": {
+          "enum": [
+            "chat",
+            "code_patch",
+            "source_code",
+            "data",
+            "document",
+            "spreadsheet",
+            "presentation",
+            "image",
+            "audio",
+            "video",
+            "configuration",
+            "message",
+            "deployed_service",
+            "other"
+          ]
+        },
+        "format": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "schema_ref": {
+          "type": "string"
+        },
+        "language": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "audience": {
+          "type": "string"
+        },
+        "length": {
+          "enum": ["minimal", "concise", "standard", "detailed", "exhaustive", "bounded"]
+        },
+        "max_units": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["unit", "value"],
+          "properties": {
+            "unit": {
+              "enum": ["tokens", "words", "characters", "rows", "slides", "items"]
+            },
+            "value": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "style": {
+          "type": "string"
+        },
+        "destination": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "autonomy", "ambiguity", "side_effect_ceiling", "approval_required_for"],
+      "properties": {
+        "mode": {
+          "enum": ["answer", "inspect", "plan", "mutate", "transact", "monitor"]
+        },
+        "autonomy": {
+          "enum": ["read_only", "in_scope", "proactive"]
+        },
+        "ambiguity": {
+          "enum": ["ask_if_material", "assume_reversible", "always_ask", "never_ask"]
+        },
+        "side_effect_ceiling": {
+          "enum": ["none", "local_write", "external_write", "destructive", "financial"]
+        },
+        "approval_required_for": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "local_write",
+              "external_write",
+              "destructive",
+              "financial",
+              "publish",
+              "send",
+              "secrets",
+              "scope_expansion"
+            ]
+          }
+        }
+      }
+    },
+    "budget": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "max_input_tokens": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_output_tokens": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_cost": {
+          "type": "number",
+          "minimum": 0
+        },
+        "currency": {
+          "type": "string"
+        },
+        "max_latency_ms": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "quality_floor": {
+          "enum": ["best_effort", "routine", "high", "critical"]
+        },
+        "optimization_target": {
+          "enum": ["quality", "cost", "latency", "balanced"]
+        }
+      },
+      "dependentRequired": {
+        "max_cost": ["currency"]
+      }
+    },
+    "risk": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["impact", "domains", "data_class", "reversible"],
+      "properties": {
+        "impact": {
+          "enum": ["low", "moderate", "high", "critical"]
+        },
+        "domains": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "general",
+              "privacy",
+              "security",
+              "legal",
+              "medical",
+              "financial",
+              "physical_safety",
+              "employment",
+              "reputation",
+              "other"
+            ]
+          }
+        },
+        "data_class": {
+          "enum": ["public", "internal", "confidential", "restricted", "secrets"]
+        },
+        "reversible": {
+          "type": "boolean"
+        }
+      }
+    },
+    "unknown": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["field", "impact", "resolution"],
+      "properties": {
+        "field": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "impact": {
+          "enum": ["immaterial", "material", "blocking"]
+        },
+        "resolution": {
+          "enum": ["default", "infer", "retrieve", "ask"]
+        },
+        "assumed_value": {}
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_message_ids", "parser", "confidence", "lossy", "preserved_literals"],
+      "properties": {
+        "source_message_ids": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "source_hash": {
+          "type": "string"
+        },
+        "parser": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "lossy": {
+          "type": "boolean"
+        },
+        "preserved_literals": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

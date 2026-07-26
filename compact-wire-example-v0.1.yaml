@@ -1,0 +1,50 @@
+# This is a transport projection, not the canonical record.
+# Its key dictionary and enum table should live in code or a cached prefix.
+#
+# Key dictionary:
+#   v version        id request_id    tr turn relation
+#   f families       a acts           g outcome
+#   i inputs         r resources      e evidence
+#   c constraints    s success        o output
+#   p policy         b budget         k risk
+#   u unknowns       pv provenance
+#
+# Enum aliases:
+#   req required     allow allowed     ban forbidden
+#   rd read          wr write          exe execute
+#   cur current      pri primary       cite required
+#   mut mutate       scope in_scope    rev assume_reversible
+#   lw local_write
+
+v: 1
+id: p-tax-0725
+tr: new
+f: [analysis, design, production]
+a:
+  - [research, prompt_efficiency]
+  - [architect, prompt_intent_taxonomy]
+  - [create, "yaml+json+notes"]
+g: "Versioned intent IR that preserves outcome, permissions, and checks while leaving routing replaceable."
+i:
+  - [msg:current, subject, semantic, instruction, true]
+r:
+  - [web.search, req, rd, public]
+  - [web.fetch, req, rd, selected_sources]
+  - [fs.write, req, wr, outputs]
+e: [cur, pri, cite, disclose_material]
+c:
+  - [must, "lightweight machine-readable reconstruction", output, 100]
+  - [must, "represent API/file capability need", resources, 100]
+  - [must, "same outcome; same or cheaper route", success, 100]
+  - [should, "detailed but not exhaustive", output, 70]
+s:
+  - [schema, "valid YAML and JSON Schema", true]
+  - [rubric, "route-neutral and expressive", true]
+  - [source_support, "claims trace to primary sources", true]
+o: [configuration, "yaml+json+md", en-US, detailed, outputs]
+p: [mut, scope, rev, lw, [external_write, destructive, financial, publish, send]]
+b: [high, balanced]
+k: [moderate, [general, privacy, security], public, true]
+u:
+  - [deployment_provider, immaterial, default, provider-neutral]
+pv: [[msg:current], reference-v0.1, 0.94, false]

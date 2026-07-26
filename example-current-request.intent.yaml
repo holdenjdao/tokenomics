@@ -1,0 +1,150 @@
+version: "0.1.0"
+request_id: req-2026-07-25-prompt-taxonomy
+
+turn:
+  relation: new
+
+intent:
+  families: [analysis, design, production]
+  acts:
+    - operation: research
+      object: verified prompt-engineering and token-efficiency guidance
+      purpose: ground the taxonomy in evidence rather than intuition
+    - operation: architect
+      object: a provider-neutral taxonomy of AI user prompts
+      purpose: preserve intent while enabling cheaper reconstruction and routing
+    - operation: create
+      object: machine-readable YAML and JSON artifacts
+      purpose: provide an implementable starting point
+  outcome: >-
+    A compact, versioned intent representation can capture what a user wants,
+    what data and capabilities are needed, what actions are authorized, and how
+    success is judged without fixing a specific model or tool route.
+  audience: Product and AI infrastructure engineers
+  domain: [prompt_engineering, llm_infrastructure, cost_optimization]
+
+inputs:
+  - id: user-request
+    kind: conversation
+    role: subject
+    locator: message://current/user
+    handling: semantic
+    trust: instruction
+    required: true
+
+resources:
+  - capability: web.search
+    necessity: required
+    effect: read
+    scope: public primary research and official vendor documentation
+    authorization: none_needed
+  - capability: web.fetch
+    necessity: required
+    effect: read
+    scope: sources selected during research
+    authorization: none_needed
+  - capability: fs.write
+    necessity: required
+    effect: write
+    scope: outputs/
+    authorization: preauthorized
+
+evidence:
+  freshness: current
+  source_policy: primary
+  citations: required
+  uncertainty: disclose_material
+
+constraints:
+  - id: c-lightweight
+    strength: must
+    clause: The representation must be lightweight enough for prompt reconstruction and routing.
+    applies_to: output
+    priority: 100
+    conflict_policy: higher_authority
+  - id: c-not-exhaustive
+    strength: should
+    clause: Keep version 0.1 detailed but not exhaustive.
+    applies_to: output
+    priority: 70
+    conflict_policy: higher_priority
+  - id: c-capabilities
+    strength: must
+    clause: Capture whether APIs, user files, and similar capabilities are needed or permitted.
+    applies_to: resources
+    priority: 100
+    conflict_policy: higher_authority
+  - id: c-equivalent-outcome
+    strength: must
+    clause: Enable reconstruction that preserves the outcome while allowing the same or cheaper tools.
+    applies_to: success
+    priority: 100
+    conflict_policy: higher_authority
+
+success:
+  - id: s-machine-readable
+    criterion: At least one valid YAML artifact and one validating JSON Schema exist.
+    check: schema
+    required: true
+  - id: s-expressive
+    criterion: >-
+      The IR distinguishes outcome, inputs, resources, evidence, constraints,
+      success, output, authorization, risk, ambiguity, and provenance.
+    check: rubric
+    required: true
+  - id: s-route-neutral
+    criterion: A specific provider, model, or vendor tool is not required by the intent record.
+    check: rubric
+    required: true
+  - id: s-research
+    criterion: Material design claims are traceable to primary research or official documentation.
+    check: source_support
+    required: true
+
+output:
+  deliverable: configuration
+  format: YAML taxonomy plus JSON Schema and Markdown design notes
+  schema_ref: ./prompt-intent-ir-v0.1.schema.json
+  language: en-US
+  audience: Product and AI infrastructure engineers
+  length: detailed
+  style: Direct, technical, and explicit about tradeoffs and open questions.
+  destination: outputs/
+
+policy:
+  mode: mutate
+  autonomy: in_scope
+  ambiguity: assume_reversible
+  side_effect_ceiling: local_write
+  approval_required_for: [external_write, destructive, financial, publish, send, secrets, scope_expansion]
+
+budget:
+  quality_floor: high
+  optimization_target: balanced
+
+risk:
+  impact: moderate
+  domains: [general, privacy, security]
+  data_class: public
+  reversible: true
+
+unknowns:
+  - field: deployment_provider
+    impact: immaterial
+    resolution: default
+    assumed_value: provider-neutral
+  - field: exact_token_budget
+    impact: immaterial
+    resolution: default
+    assumed_value: optimize after equivalence tests exist
+
+provenance:
+  source_message_ids: [message://current/user]
+  parser: human-designed-reference-v0.1
+  confidence: 0.94
+  lossy: false
+  preserved_literals:
+    - "yaml or json"
+    - APIs
+    - user's files
+    - vector DB
