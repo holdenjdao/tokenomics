@@ -27,3 +27,20 @@ cheaper or simpler way to complete the work while keeping the same intent.
 
 Version 0.1 is a draft intended as a practical starting point for testing and
 iteration.
+
+## Validating the examples
+
+Install the dependencies and run the validator:
+
+```bash
+pip install -r requirements.txt
+python validate.py
+```
+
+It checks every example intent record against
+`prompt-intent-ir-v0.1.schema.json` and exits non-zero on the first mismatch.
+The same check runs in CI on every push and pull request.
+
+## License
+
+Released under the [MIT License](LICENSE).
